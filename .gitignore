@@ -13,6 +13,9 @@ src-tauri/gen/
 .env.local
 .env.*.local
 
+# Signing keys (NEVER commit these)
+src-tauri/signing/
+
 # Logs
 *.log
 npm-debug.log*
