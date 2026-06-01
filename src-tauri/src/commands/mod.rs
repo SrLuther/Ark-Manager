@@ -17,3 +17,4 @@ pub mod seasonal_events;
 pub mod sync;
 pub mod discord;
 pub mod database;
+pub mod network;

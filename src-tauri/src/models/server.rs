@@ -198,8 +198,11 @@ impl Server {
 #[serde(rename_all = "camelCase")]
 pub struct CreateServerRequest {
     pub name: String,
+    #[serde(rename = "installDir")]
     pub install_path: String,
+    #[serde(rename = "map")]
     pub map_name: String,
+    #[serde(default)]
     pub session_name: String,
     pub game_port: u16,
     pub query_port: u16,
@@ -228,7 +231,9 @@ pub struct CreateServerRequest {
 #[serde(rename_all = "camelCase")]
 pub struct UpdateServerRequest {
     pub name: Option<String>,
+    #[serde(rename = "installDir")]
     pub install_path: Option<String>,
+    #[serde(rename = "map")]
     pub map_name: Option<String>,
     pub session_name: Option<String>,
     pub game_port: Option<u16>,
@@ -289,6 +294,7 @@ pub struct ServerResponse {
     pub auto_restart: bool,
     pub startup_delay: u16,
     pub status: ServerStatus,
+    #[serde(rename = "pidCached")]
     pub pid: Option<u32>,
     pub last_started: Option<String>,
     pub last_stopped: Option<String>,

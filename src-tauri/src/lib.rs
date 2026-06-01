@@ -161,6 +161,9 @@ pub fn run() {
             commands::seasonal_events::force_start_event,
             commands::seasonal_events::force_end_event,
             commands::seasonal_events::get_event_status,
+            // Rede
+            commands::network::detect_port_conflicts,
+            commands::network::suggest_available_port,
         ])
         .setup(move |app| {
             let handle = app.handle().clone();

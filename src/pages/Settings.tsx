@@ -208,6 +208,10 @@ export default function Settings() {
     setSaving(true)
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+      await Promise.allSettled([
+        saveDatabaseUrl(currentUrl()),
+        saveDiscordConfig(discordWebhook, discordEvents),
+      ])
       toast.success('Configurações salvas')
     } finally { setSaving(false) }
   }
