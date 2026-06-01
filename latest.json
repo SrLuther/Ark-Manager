@@ -1,0 +1,11 @@
+{
+  "version": "1.0.1",
+  "notes": "Correcoes: persistencia de configuracoes, create_server e verificar portas.",
+  "pub_date": "2026-06-01T12:00:00Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRRzY3RWFPamxUdzcwRmxHa1NvTlEvdUEvMTY0TkhhZUxrTTc2L1lJQzZkOURuN3lSQnh6WFlwdTVwWFl5aE5OdE4xUXlDMndleFRWaWh2UmtnbGhjUHRualliMkh4bUFRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwMzMyNDM0CWZpbGU6QXJrIE1hbmFnZXJfMS4wLjBfeDY0LXNldHVwLmV4ZQo5TFV3RGdHcUJxK0paZHhYNDl1clJMSnA4VU80aG10RW1OcjgwSjU5aXRMc3YzS2FFbTVSOUFqalFsd0E2b2NlaVYvYnlWVWtuNGdHNjVWZ1lZRzZBQT09Cg==",
+      "url": "https://github.com/SrLuther/Ark-Manager/releases/download/v1.0.1/Ark.Manager_1.0.0_x64-setup.exe"
+    }
+  }
+}
