@@ -50,7 +50,7 @@ pub async fn backup_ini_files(
 ) -> Result<(), ConfigSwapError> {
     // Verifica se backup já existe
     let existing: (i64,) = sqlx::query_as(
-        "SELECT COUNT(*) FROM seasonal_event_backups WHERE event_id = ? AND server_id = ?",
+        "SELECT COUNT(*) FROM am_seasonal_event_backups WHERE event_id = ? AND server_id = ?",
     )
     .bind(event_id)
     .bind(server_id)
@@ -79,7 +79,7 @@ pub async fn backup_ini_files(
 
     // Registra no banco
     sqlx::query(
-        "INSERT INTO seasonal_event_backups (event_id, server_id, gus_backup_path, game_ini_backup_path)
+        "INSERT INTO am_seasonal_event_backups (event_id, server_id, gus_backup_path, game_ini_backup_path)
          VALUES (?, ?, ?, ?)",
     )
     .bind(event_id)
@@ -138,7 +138,7 @@ pub async fn restore_ini_files(
     server_id: u32,
 ) -> Result<(), ConfigSwapError> {
     let backup: Option<(String, String)> = sqlx::query_as(
-        "SELECT gus_backup_path, game_ini_backup_path FROM seasonal_event_backups
+        "SELECT gus_backup_path, game_ini_backup_path FROM am_seasonal_event_backups
          WHERE event_id = ? AND server_id = ?",
     )
     .bind(event_id)
@@ -181,7 +181,7 @@ pub async fn restore_ini_files(
 
     // Remove registro do banco
     sqlx::query(
-        "DELETE FROM seasonal_event_backups WHERE event_id = ? AND server_id = ?",
+        "DELETE FROM am_seasonal_event_backups WHERE event_id = ? AND server_id = ?",
     )
     .bind(event_id)
     .bind(server_id)

@@ -11,7 +11,7 @@ pub async fn list_backups(
     state: State<'_, AppState>,
 ) -> Result<Vec<Backup>, String> {
     sqlx::query_as::<_, Backup>(
-        "SELECT * FROM backups WHERE server_id = ? ORDER BY created_at DESC",
+        "SELECT * FROM am_backups WHERE server_id = ? ORDER BY created_at DESC",
     )
     .bind(server_id)
     .fetch_all(&state.db)
@@ -47,7 +47,7 @@ pub async fn create_backup(
 
     // Registra no banco
     sqlx::query(
-        r#"INSERT INTO backups
+        r#"INSERT INTO am_backups
         (server_id, backup_type, file_path, size_bytes, includes_saves, status, created_at)
         VALUES (?, 'manual', ?, ?, 1, 'completed', NOW())"#,
     )

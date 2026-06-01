@@ -10,7 +10,7 @@ pub async fn list_tasks(
     state: State<'_, AppState>,
 ) -> Result<Vec<ScheduledTask>, String> {
     sqlx::query_as::<_, ScheduledTask>(
-        "SELECT * FROM scheduled_tasks WHERE server_id = ? ORDER BY task_name ASC",
+        "SELECT * FROM am_scheduled_tasks WHERE server_id = ? ORDER BY task_name ASC",
     )
     .bind(server_id)
     .fetch_all(&state.db)
@@ -30,7 +30,7 @@ pub async fn create_task(
     }
 
     sqlx::query(
-        r#"INSERT INTO scheduled_tasks
+        r#"INSERT INTO am_scheduled_tasks
         (server_id, task_name, task_type, cron_expression, command, message,
          pre_warning_minutes, enabled, run_count, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, NOW(), NOW())"#,
@@ -48,7 +48,7 @@ pub async fn create_task(
     .map_err(|e| e.to_string())?;
 
     sqlx::query_as::<_, ScheduledTask>(
-        "SELECT * FROM scheduled_tasks ORDER BY id DESC LIMIT 1",
+        "SELECT * FROM am_scheduled_tasks ORDER BY id DESC LIMIT 1",
     )
     .fetch_one(&state.db)
     .await
@@ -69,7 +69,7 @@ pub async fn update_task(
     }
 
     sqlx::query(
-        r#"UPDATE scheduled_tasks SET
+        r#"UPDATE am_scheduled_tasks SET
         task_name = COALESCE(?, task_name),
         task_type = COALESCE(?, task_type),
         cron_expression = COALESCE(?, cron_expression),
@@ -92,7 +92,7 @@ pub async fn update_task(
     .await
     .map_err(|e| e.to_string())?;
 
-    sqlx::query_as::<_, ScheduledTask>("SELECT * FROM scheduled_tasks WHERE id = ?")
+    sqlx::query_as::<_, ScheduledTask>("SELECT * FROM am_scheduled_tasks WHERE id = ?")
         .bind(id)
         .fetch_one(&state.db)
         .await
@@ -102,7 +102,7 @@ pub async fn update_task(
 /// Remove uma tarefa agendada.
 #[tauri::command]
 pub async fn delete_task(id: u32, state: State<'_, AppState>) -> Result<(), String> {
-    sqlx::query("DELETE FROM scheduled_tasks WHERE id = ?")
+    sqlx::query("DELETE FROM am_scheduled_tasks WHERE id = ?")
         .bind(id)
         .execute(&state.db)
         .await

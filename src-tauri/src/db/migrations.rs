@@ -33,7 +33,7 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), DbError> {
 async fn create_migrations_table(pool: &DbPool) -> Result<(), DbError> {
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS _migrations (
+        CREATE TABLE IF NOT EXISTS am_migrations (
             id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             name        VARCHAR(255) NOT NULL UNIQUE,
             applied_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -47,7 +47,7 @@ async fn create_migrations_table(pool: &DbPool) -> Result<(), DbError> {
 
 /// Retorna `true` se a migration com esse nome já foi aplicada.
 async fn is_applied(pool: &DbPool, name: &str) -> Result<bool, DbError> {
-    let row: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM _migrations WHERE name = ?")
+    let row: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM am_migrations WHERE name = ?")
         .bind(name)
         .fetch_one(pool)
         .await?;
@@ -56,7 +56,7 @@ async fn is_applied(pool: &DbPool, name: &str) -> Result<bool, DbError> {
 
 /// Registra a migration como aplicada.
 async fn mark_applied(pool: &DbPool, name: &str) -> Result<(), DbError> {
-    sqlx::query("INSERT IGNORE INTO _migrations (name) VALUES (?)")
+    sqlx::query("INSERT IGNORE INTO am_migrations (name) VALUES (?)")
         .bind(name)
         .execute(pool)
         .await?;
@@ -78,7 +78,7 @@ async fn migrate_v1_initial_schema(pool: &DbPool) -> Result<(), DbError> {
     // --- Tabela: servers ---------------------------------------------------
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS servers (
+        CREATE TABLE IF NOT EXISTS am_servers (
             id                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             name                VARCHAR(255) NOT NULL,
             install_path        TEXT NOT NULL,
@@ -126,7 +126,7 @@ async fn migrate_v1_initial_schema(pool: &DbPool) -> Result<(), DbError> {
     // --- Tabela: clusters --------------------------------------------------
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS clusters (
+        CREATE TABLE IF NOT EXISTS am_clusters (
             id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             name            VARCHAR(255) NOT NULL,
             cluster_id      VARCHAR(255) NOT NULL COMMENT 'ClusterId ARK',
@@ -145,7 +145,7 @@ async fn migrate_v1_initial_schema(pool: &DbPool) -> Result<(), DbError> {
     // --- Tabela: cluster_servers -------------------------------------------
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS cluster_servers (
+        CREATE TABLE IF NOT EXISTS am_cluster_servers (
             id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             cluster_id  INT UNSIGNED NOT NULL,
             server_id   INT UNSIGNED NOT NULL,
@@ -163,7 +163,7 @@ async fn migrate_v1_initial_schema(pool: &DbPool) -> Result<(), DbError> {
     // --- Tabela: mods ------------------------------------------------------
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS mods (
+        CREATE TABLE IF NOT EXISTS am_mods (
             id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             server_id       INT UNSIGNED NOT NULL,
             mod_id          VARCHAR(50) NOT NULL COMMENT 'ID Steam Workshop',
@@ -187,7 +187,7 @@ async fn migrate_v1_initial_schema(pool: &DbPool) -> Result<(), DbError> {
     // --- Tabela: backups ---------------------------------------------------
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS backups (
+        CREATE TABLE IF NOT EXISTS am_backups (
             id                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             server_id           INT UNSIGNED NOT NULL,
             backup_type         ENUM('manual','auto','pre-update','pre-restart') NOT NULL DEFAULT 'manual',
@@ -217,7 +217,7 @@ async fn migrate_v1_initial_schema(pool: &DbPool) -> Result<(), DbError> {
     // --- Tabela: backup_policies ------------------------------------------
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS backup_policies (
+        CREATE TABLE IF NOT EXISTS am_backup_policies (
             server_id               INT UNSIGNED PRIMARY KEY,
             enabled                 TINYINT(1) NOT NULL DEFAULT 0,
             interval_hours          SMALLINT UNSIGNED NOT NULL DEFAULT 24,
@@ -237,7 +237,7 @@ async fn migrate_v1_initial_schema(pool: &DbPool) -> Result<(), DbError> {
     // --- Tabela: scheduled_tasks ------------------------------------------
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS scheduled_tasks (
+        CREATE TABLE IF NOT EXISTS am_scheduled_tasks (
             id                      INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             server_id               INT UNSIGNED NOT NULL,
             task_name               VARCHAR(255),
@@ -267,7 +267,7 @@ async fn migrate_v1_initial_schema(pool: &DbPool) -> Result<(), DbError> {
     // --- Tabela: settings (key-value global) -------------------------------
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS settings (
+        CREATE TABLE IF NOT EXISTS am_settings (
             `key`       VARCHAR(255) PRIMARY KEY,
             value       TEXT NOT NULL,
             updated_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -282,7 +282,7 @@ async fn migrate_v1_initial_schema(pool: &DbPool) -> Result<(), DbError> {
     // Executados com IF NOT EXISTS equivalente via IGNORE em CREATE INDEX (MySQL não suporta
     // IF NOT EXISTS nativamente antes do 8.0.31 — usamos tabelas separadas como guard)
     let _ = sqlx::query(
-        "CREATE INDEX idx_servers_status ON servers (status)",
+        "CREATE INDEX idx_servers_status ON am_servers (status)",
     )
     .execute(pool)
     .await; // Ignora erro caso já exista
@@ -301,7 +301,7 @@ async fn migrate_v1_initial_schema(pool: &DbPool) -> Result<(), DbError> {
 
     for (key, value) in defaults {
         sqlx::query(
-            "INSERT IGNORE INTO settings (`key`, value) VALUES (?, ?)",
+            "INSERT IGNORE INTO am_settings (`key`, value) VALUES (?, ?)",
         )
         .bind(key)
         .bind(value)
@@ -329,19 +329,19 @@ async fn migrate_v2_server_columns(pool: &DbPool) -> Result<(), DbError> {
 
     // hardware_allocation embutido em servers como JSON
     let _ = sqlx::query(
-        "ALTER TABLE servers ADD COLUMN hardware_config JSON COMMENT 'CPU affinity e prioridade'",
+        "ALTER TABLE am_servers ADD COLUMN hardware_config JSON COMMENT 'CPU affinity e prioridade'",
     )
     .execute(pool)
     .await; // Ignora caso coluna já exista
 
     let _ = sqlx::query(
-        "ALTER TABLE servers ADD COLUMN startup_priority SMALLINT UNSIGNED NOT NULL DEFAULT 100",
+        "ALTER TABLE am_servers ADD COLUMN startup_priority SMALLINT UNSIGNED NOT NULL DEFAULT 100",
     )
     .execute(pool)
     .await;
 
     let _ = sqlx::query(
-        "ALTER TABLE servers ADD COLUMN intelligent_mode TINYINT(1) NOT NULL DEFAULT 0",
+        "ALTER TABLE am_servers ADD COLUMN intelligent_mode TINYINT(1) NOT NULL DEFAULT 0",
     )
     .execute(pool)
     .await;
@@ -365,14 +365,14 @@ async fn migrate_v3_backup_columns(pool: &DbPool) -> Result<(), DbError> {
 
     // compression_level — para futura compressão configurável
     let _ = sqlx::query(
-        "ALTER TABLE backups ADD COLUMN compression_level TINYINT UNSIGNED DEFAULT 6",
+        "ALTER TABLE am_backups ADD COLUMN compression_level TINYINT UNSIGNED DEFAULT 6",
     )
     .execute(pool)
     .await;
 
     // duration_secs — quanto tempo durou o backup
     let _ = sqlx::query(
-        "ALTER TABLE backups ADD COLUMN duration_secs SMALLINT UNSIGNED",
+        "ALTER TABLE am_backups ADD COLUMN duration_secs SMALLINT UNSIGNED",
     )
     .execute(pool)
     .await;
@@ -395,19 +395,19 @@ async fn migrate_v4_scheduler_columns(pool: &DbPool) -> Result<(), DbError> {
     log::info!("Migration {}: adicionando colunas extras em scheduled_tasks...", NAME);
 
     let _ = sqlx::query(
-        "ALTER TABLE scheduled_tasks ADD COLUMN run_count INT UNSIGNED NOT NULL DEFAULT 0",
+        "ALTER TABLE am_scheduled_tasks ADD COLUMN run_count INT UNSIGNED NOT NULL DEFAULT 0",
     )
     .execute(pool)
     .await;
 
     let _ = sqlx::query(
-        "ALTER TABLE scheduled_tasks ADD COLUMN last_result ENUM('success','failure','skipped')",
+        "ALTER TABLE am_scheduled_tasks ADD COLUMN last_result ENUM('success','failure','skipped')",
     )
     .execute(pool)
     .await;
 
     let _ = sqlx::query(
-        "ALTER TABLE scheduled_tasks ADD COLUMN last_error TEXT",
+        "ALTER TABLE am_scheduled_tasks ADD COLUMN last_error TEXT",
     )
     .execute(pool)
     .await;
@@ -432,7 +432,7 @@ async fn migrate_v5_agent_tables(pool: &DbPool) -> Result<(), DbError> {
     // --- Tabela: sync_agents -----------------------------------------------
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS sync_agents (
+        CREATE TABLE IF NOT EXISTS am_sync_agents (
             id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             name            VARCHAR(255) NOT NULL,
             address         VARCHAR(45) NOT NULL COMMENT 'IP do agente remoto',
@@ -452,7 +452,7 @@ async fn migrate_v5_agent_tables(pool: &DbPool) -> Result<(), DbError> {
     // --- Tabela: sync_folders ----------------------------------------------
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS sync_folders (
+        CREATE TABLE IF NOT EXISTS am_sync_folders (
             id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             name            VARCHAR(255) NOT NULL,
             local_path      TEXT NOT NULL,
@@ -491,7 +491,7 @@ async fn migrate_v6_sync_tables(pool: &DbPool) -> Result<(), DbError> {
 
     // Adiciona coluna session_token a sync_agents (token original para WS)
     let _ = sqlx::query(
-        "ALTER TABLE sync_agents ADD COLUMN session_token VARCHAR(255) COMMENT 'Token WS em claro'",
+        "ALTER TABLE am_sync_agents ADD COLUMN session_token VARCHAR(255) COMMENT 'Token WS em claro'",
     )
     .execute(pool)
     .await;
@@ -499,7 +499,7 @@ async fn migrate_v6_sync_tables(pool: &DbPool) -> Result<(), DbError> {
     // --- Tabela: sync_events -----------------------------------------------
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS sync_events (
+        CREATE TABLE IF NOT EXISTS am_sync_events (
             id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             folder_id   INT UNSIGNED NOT NULL,
             event_type  ENUM('transfer','conflict','error','connected','disconnected','sync_complete')
@@ -521,7 +521,7 @@ async fn migrate_v6_sync_tables(pool: &DbPool) -> Result<(), DbError> {
     // --- Tabela: sync_conflicts --------------------------------------------
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS sync_conflicts (
+        CREATE TABLE IF NOT EXISTS am_sync_conflicts (
             id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             folder_id       INT UNSIGNED NOT NULL,
             path            TEXT NOT NULL,
@@ -557,7 +557,7 @@ async fn migrate_v7_seasonal_events(pool: &DbPool) -> Result<(), DbError> {
     // --- Tabela: seasonal_events ------------------------------------------
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS seasonal_events (
+        CREATE TABLE IF NOT EXISTS am_seasonal_events (
             id                          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             name                        VARCHAR(255) NOT NULL,
             description                 TEXT,
@@ -581,7 +581,7 @@ async fn migrate_v7_seasonal_events(pool: &DbPool) -> Result<(), DbError> {
     // --- Tabela: seasonal_event_rates ------------------------------------
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS seasonal_event_rates (
+        CREATE TABLE IF NOT EXISTS am_seasonal_event_rates (
             id                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             event_id            INT UNSIGNED NOT NULL,
             xp_multiplier       DOUBLE NOT NULL DEFAULT 1.0,
@@ -601,7 +601,7 @@ async fn migrate_v7_seasonal_events(pool: &DbPool) -> Result<(), DbError> {
     // --- Tabela: seasonal_event_servers ----------------------------------
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS seasonal_event_servers (
+        CREATE TABLE IF NOT EXISTS am_seasonal_event_servers (
             id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             event_id    INT UNSIGNED NOT NULL,
             server_id   INT UNSIGNED NOT NULL,
@@ -618,7 +618,7 @@ async fn migrate_v7_seasonal_events(pool: &DbPool) -> Result<(), DbError> {
     // --- Tabela: seasonal_event_backups ----------------------------------
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS seasonal_event_backups (
+        CREATE TABLE IF NOT EXISTS am_seasonal_event_backups (
             id                      INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             event_id                INT UNSIGNED NOT NULL,
             server_id               INT UNSIGNED NOT NULL,

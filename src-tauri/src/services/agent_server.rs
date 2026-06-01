@@ -357,7 +357,7 @@ async fn handle_sync_message(
 /// Busca o caminho local de uma pasta pelo ID no banco.
 async fn get_folder_path(pool: &DbPool, folder_id: u32) -> Option<String> {
     sqlx::query_scalar::<_, String>(
-        "SELECT local_path FROM sync_folders WHERE id = ? LIMIT 1",
+        "SELECT local_path FROM am_sync_folders WHERE id = ? LIMIT 1",
     )
     .bind(folder_id)
     .fetch_optional(pool)

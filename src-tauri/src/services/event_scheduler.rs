@@ -63,7 +63,7 @@ pub async fn deactivate_event_manual(
     let ev: SeasonalEvent = sqlx::query_as(
         "SELECT id, name, description, start_at, end_at, status,
                 broadcast_interval_seconds, created_at, updated_at
-         FROM seasonal_events WHERE id = ?",
+         FROM am_seasonal_events WHERE id = ?",
     )
     .bind(event_id)
     .fetch_one(pool)
@@ -100,7 +100,7 @@ async fn poll_events(pool: &DbPool, state: &SchedulerState) -> Result<(), String
     let to_start: Vec<SeasonalEvent> = sqlx::query_as(
         "SELECT id, name, description, start_at, end_at, status,
                 broadcast_interval_seconds, created_at, updated_at
-         FROM seasonal_events
+         FROM am_seasonal_events
          WHERE status = 'scheduled' AND start_at <= ?",
     )
     .bind(&now)
@@ -118,7 +118,7 @@ async fn poll_events(pool: &DbPool, state: &SchedulerState) -> Result<(), String
     let to_finish: Vec<SeasonalEvent> = sqlx::query_as(
         "SELECT id, name, description, start_at, end_at, status,
                 broadcast_interval_seconds, created_at, updated_at
-         FROM seasonal_events
+         FROM am_seasonal_events
          WHERE status = 'active' AND end_at <= ?",
     )
     .bind(&now)
@@ -137,7 +137,7 @@ async fn poll_events(pool: &DbPool, state: &SchedulerState) -> Result<(), String
     let warn_end_at = chrono_offset_str(WARN_BEFORE_SECS);
 
     let upcoming: Vec<(u32, String)> = sqlx::query_as(
-        "SELECT id, name FROM seasonal_events
+        "SELECT id, name FROM am_seasonal_events
          WHERE status = 'scheduled' AND start_at BETWEEN ? AND ?",
     )
     .bind(&now)
@@ -156,7 +156,7 @@ async fn poll_events(pool: &DbPool, state: &SchedulerState) -> Result<(), String
     }
 
     let ending_soon: Vec<(u32, String)> = sqlx::query_as(
-        "SELECT id, name FROM seasonal_events
+        "SELECT id, name FROM am_seasonal_events
          WHERE status = 'active' AND end_at BETWEEN ? AND ?",
     )
     .bind(&now)
@@ -338,7 +338,7 @@ async fn deactivate_event(
 
 async fn get_event_server_ids(pool: &DbPool, event_id: u32) -> Result<Vec<u32>, String> {
     let rows: Vec<(u32,)> =
-        sqlx::query_as("SELECT server_id FROM seasonal_event_servers WHERE event_id = ?")
+        sqlx::query_as("SELECT server_id FROM am_seasonal_event_servers WHERE event_id = ?")
             .bind(event_id)
             .fetch_all(pool)
             .await
@@ -350,7 +350,7 @@ async fn get_event_rates(pool: &DbPool, event_id: u32) -> Result<Option<EventRat
     let rate: Option<EventRate> = sqlx::query_as(
         "SELECT id, event_id, xp_multiplier, harvest_multiplier, taming_multiplier,
                 breeding_multiplier, quality_multiplier
-         FROM seasonal_event_rates WHERE event_id = ?",
+         FROM am_seasonal_event_rates WHERE event_id = ?",
     )
     .bind(event_id)
     .fetch_optional(pool)
@@ -365,7 +365,7 @@ async fn get_server_rcon_info(
     server_id: u32,
 ) -> Result<(String, u16, String), String> {
     let row: (String, i64, String) = sqlx::query_as(
-        "SELECT install_path, rcon_port, admin_password FROM servers WHERE id = ?",
+        "SELECT install_path, rcon_port, admin_password FROM am_servers WHERE id = ?",
     )
     .bind(server_id)
     .fetch_one(pool)
@@ -383,7 +383,7 @@ async fn get_server_rcon_info(
 /// Não usa PidMap pois o scheduler roda em contexto separado.
 async fn stop_server_by_id(pool: &DbPool, server_id: u32) {
     let pid: Option<(Option<u32>,)> =
-        sqlx::query_as("SELECT pid FROM servers WHERE id = ?")
+        sqlx::query_as("SELECT pid FROM am_servers WHERE id = ?")
             .bind(server_id)
             .fetch_optional(pool)
             .await
@@ -406,7 +406,7 @@ async fn stop_server_by_id(pool: &DbPool, server_id: u32) {
     }
 
     // Atualiza status no banco
-    let _ = sqlx::query("UPDATE servers SET status = 'stopped', pid = NULL WHERE id = ?")
+    let _ = sqlx::query("UPDATE am_servers SET status = 'stopped', pid = NULL WHERE id = ?")
         .bind(server_id)
         .execute(pool)
         .await;
@@ -418,7 +418,7 @@ async fn stop_server_by_id(pool: &DbPool, server_id: u32) {
 /// Inicia o servidor pelo ID usando o script RunServer.cmd.
 async fn start_server_by_id(pool: &DbPool, server_id: u32) {
     let info: Option<(String,)> =
-        sqlx::query_as("SELECT install_path FROM servers WHERE id = ?")
+        sqlx::query_as("SELECT install_path FROM am_servers WHERE id = ?")
             .bind(server_id)
             .fetch_optional(pool)
             .await
@@ -435,7 +435,7 @@ async fn start_server_by_id(pool: &DbPool, server_id: u32) {
                 Ok(child) => {
                     let pid = child.id();
                     let _ = sqlx::query(
-                        "UPDATE servers SET status = 'starting', pid = ? WHERE id = ?",
+                        "UPDATE am_servers SET status = 'starting', pid = ? WHERE id = ?",
                     )
                     .bind(pid)
                     .bind(server_id)

@@ -19,7 +19,7 @@ pub async fn list_sync_folders(state: State<'_, AppState>) -> Result<Vec<SyncFol
     sqlx::query_as::<_, SyncFolder>(
         "SELECT id, name, local_path, agent_id, status, last_sync_at,
                 bytes_transferred, conflict_count, created_at, updated_at
-         FROM sync_folders
+         FROM am_sync_folders
          ORDER BY name ASC",
     )
     .fetch_all(&state.db)
@@ -39,7 +39,7 @@ pub async fn add_sync_folder(
 ) -> Result<SyncFolder, String> {
     // Validar limite de 5 pastas
     let count: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM sync_folders")
+        sqlx::query_scalar("SELECT COUNT(*) FROM am_sync_folders")
             .fetch_one(&state.db)
             .await
             .map_err(|e| e.to_string())?;
@@ -54,7 +54,7 @@ pub async fn add_sync_folder(
 
     // Inserir no banco
     let id = sqlx::query_scalar::<_, u64>(
-        "INSERT INTO sync_folders (name, local_path, agent_id, status, bytes_transferred, conflict_count, created_at, updated_at)
+        "INSERT INTO am_sync_folders (name, local_path, agent_id, status, bytes_transferred, conflict_count, created_at, updated_at)
          VALUES (?, ?, ?, 'idle', 0, 0, NOW(), NOW())",
     )
     .bind(&name)
@@ -87,7 +87,7 @@ pub async fn add_sync_folder(
     sqlx::query_as::<_, SyncFolder>(
         "SELECT id, name, local_path, agent_id, status, last_sync_at,
                 bytes_transferred, conflict_count, created_at, updated_at
-         FROM sync_folders WHERE id = ?",
+         FROM am_sync_folders WHERE id = ?",
     )
     .bind(id)
     .fetch_one(&state.db)
@@ -103,7 +103,7 @@ pub async fn remove_sync_folder(
     engine: State<'_, Arc<SyncEngineState>>,
 ) -> Result<(), String> {
     engine.stop_watching(id);
-    sqlx::query("DELETE FROM sync_folders WHERE id = ?")
+    sqlx::query("DELETE FROM am_sync_folders WHERE id = ?")
         .bind(id)
         .execute(&state.db)
         .await
@@ -124,7 +124,7 @@ pub async fn force_sync(
     let folder = sqlx::query_as::<_, SyncFolder>(
         "SELECT id, name, local_path, agent_id, status, last_sync_at,
                 bytes_transferred, conflict_count, created_at, updated_at
-         FROM sync_folders WHERE id = ?",
+         FROM am_sync_folders WHERE id = ?",
     )
     .bind(folder_id)
     .fetch_optional(&state.db)
@@ -154,7 +154,7 @@ pub async fn get_sync_events(
     let lim = limit.unwrap_or(100).min(500);
     sqlx::query_as::<_, SyncEvent>(
         "SELECT id, folder_id, event_type, path, bytes, direction, message, created_at
-         FROM sync_events
+         FROM am_sync_events
          WHERE folder_id = ?
          ORDER BY created_at DESC
          LIMIT ?",
@@ -174,7 +174,7 @@ pub async fn get_sync_conflicts(
 ) -> Result<Vec<SyncConflict>, String> {
     sqlx::query_as::<_, SyncConflict>(
         "SELECT id, folder_id, path, local_mtime, remote_mtime, resolution, created_at
-         FROM sync_conflicts
+         FROM am_sync_conflicts
          WHERE folder_id = ?
          ORDER BY created_at DESC",
     )
@@ -194,7 +194,7 @@ async fn get_agent_connection(
     agent_id: u32,
 ) -> Result<Option<(String, u32, String)>, String> {
     let row = sqlx::query_as::<_, (String, u32, Option<String>)>(
-        "SELECT address, port, session_token FROM sync_agents WHERE id = ? LIMIT 1",
+        "SELECT address, port, session_token FROM am_sync_agents WHERE id = ? LIMIT 1",
     )
     .bind(agent_id)
     .fetch_optional(pool)

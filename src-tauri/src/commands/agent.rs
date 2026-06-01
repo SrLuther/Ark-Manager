@@ -64,7 +64,7 @@ pub async fn discover_agents(
 pub async fn list_agents(state: State<'_, AppState>) -> Result<Vec<Agent>, String> {
     sqlx::query_as::<_, Agent>(
         "SELECT id, name, address, port, paired, token_hash, session_token, last_seen_at, created_at
-         FROM sync_agents
+         FROM am_sync_agents
          ORDER BY name ASC",
     )
     .fetch_all(&state.db)
@@ -88,7 +88,7 @@ pub async fn pair_agent(
     // Verifica se já existe um agente com o mesmo endereço
     let existing = sqlx::query_as::<_, Agent>(
         "SELECT id, name, address, port, paired, token_hash, session_token, last_seen_at, created_at
-         FROM sync_agents
+         FROM am_sync_agents
          WHERE address = ? AND port = ?",
     )
     .bind(&address)
@@ -100,7 +100,7 @@ pub async fn pair_agent(
     if let Some(existing_agent) = existing {
         // Atualiza agente existente (salva token original para conexões WS)
         sqlx::query(
-            "UPDATE sync_agents
+            "UPDATE am_sync_agents
              SET name = ?, token_hash = ?, session_token = ?, paired = 1, last_seen_at = NOW()
              WHERE id = ?",
         )
@@ -114,7 +114,7 @@ pub async fn pair_agent(
 
         return sqlx::query_as::<_, Agent>(
             "SELECT id, name, address, port, paired, token_hash, session_token, last_seen_at, created_at
-             FROM sync_agents WHERE id = ?",
+             FROM am_sync_agents WHERE id = ?",
         )
         .bind(existing_agent.id)
         .fetch_one(&state.db)
@@ -124,7 +124,7 @@ pub async fn pair_agent(
 
     // Insere novo agente
     let insert_result = sqlx::query(
-        "INSERT INTO sync_agents (name, address, port, paired, token_hash, session_token, last_seen_at, created_at)
+        "INSERT INTO am_sync_agents (name, address, port, paired, token_hash, session_token, last_seen_at, created_at)
          VALUES (?, ?, ?, 1, ?, ?, NOW(), NOW())",
     )
     .bind(&resp.agent_name)
@@ -140,7 +140,7 @@ pub async fn pair_agent(
 
     sqlx::query_as::<_, Agent>(
         "SELECT id, name, address, port, paired, token_hash, session_token, last_seen_at, created_at
-         FROM sync_agents WHERE id = ?",
+         FROM am_sync_agents WHERE id = ?",
     )
     .bind(new_id)
     .fetch_one(&state.db)
@@ -151,7 +151,7 @@ pub async fn pair_agent(
 /// Remove um agente pareado pelo ID.
 #[tauri::command]
 pub async fn remove_agent(id: u32, state: State<'_, AppState>) -> Result<(), String> {
-    sqlx::query("DELETE FROM sync_agents WHERE id = ?")
+    sqlx::query("DELETE FROM am_sync_agents WHERE id = ?")
         .bind(id)
         .execute(&state.db)
         .await

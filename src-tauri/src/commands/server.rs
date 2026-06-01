@@ -11,7 +11,7 @@ use tauri::State;
 #[tauri::command]
 pub async fn list_servers(state: State<'_, AppState>) -> Result<Vec<ServerResponse>, String> {
     let rows = sqlx::query_as::<_, crate::models::server::Server>(
-        "SELECT * FROM servers ORDER BY startup_priority ASC, name ASC",
+        "SELECT * FROM am_servers ORDER BY startup_priority ASC, name ASC",
     )
     .fetch_all(&state.db)
     .await
@@ -24,7 +24,7 @@ pub async fn list_servers(state: State<'_, AppState>) -> Result<Vec<ServerRespon
 #[tauri::command]
 pub async fn get_server(id: u32, state: State<'_, AppState>) -> Result<ServerResponse, String> {
     let row = sqlx::query_as::<_, crate::models::server::Server>(
-        "SELECT * FROM servers WHERE id = ?",
+        "SELECT * FROM am_servers WHERE id = ?",
     )
     .bind(id)
     .fetch_one(&state.db)
@@ -41,7 +41,7 @@ pub async fn create_server(
     state: State<'_, AppState>,
 ) -> Result<ServerResponse, String> {
     sqlx::query(
-        r#"INSERT INTO servers
+        r#"INSERT INTO am_servers
         (name, install_path, map_name, session_name, game_port, query_port, rcon_port,
          rcon_enabled, max_players, server_password, admin_password, spectator_password,
          ip_address, mods, cluster_id, enable_pvp, enable_battleye, enable_crosshair,
@@ -78,7 +78,7 @@ pub async fn create_server(
     .map_err(|e| e.to_string())?;
 
     let row = sqlx::query_as::<_, crate::models::server::Server>(
-        "SELECT * FROM servers ORDER BY id DESC LIMIT 1",
+        "SELECT * FROM am_servers ORDER BY id DESC LIMIT 1",
     )
     .fetch_one(&state.db)
     .await
@@ -95,7 +95,7 @@ pub async fn update_server(
     state: State<'_, AppState>,
 ) -> Result<ServerResponse, String> {
     sqlx::query(
-        r#"UPDATE servers SET
+        r#"UPDATE am_servers SET
         name = COALESCE(?, name),
         install_path = COALESCE(?, install_path),
         map_name = COALESCE(?, map_name),
@@ -162,7 +162,7 @@ pub async fn update_server(
 /// Remove um servidor (apenas se estiver parado).
 #[tauri::command]
 pub async fn delete_server(id: u32, state: State<'_, AppState>) -> Result<(), String> {
-    sqlx::query("DELETE FROM servers WHERE id = ?")
+    sqlx::query("DELETE FROM am_servers WHERE id = ?")
         .bind(id)
         .execute(&state.db)
         .await
@@ -178,7 +178,7 @@ pub async fn start_server(
     state: State<'_, AppState>,
 ) -> Result<u32, String> {
     let server = sqlx::query_as::<_, crate::models::server::Server>(
-        "SELECT * FROM servers WHERE id = ?",
+        "SELECT * FROM am_servers WHERE id = ?",
     )
     .bind(id)
     .fetch_one(&state.db)
@@ -215,7 +215,7 @@ pub async fn start_server(
         .map_err(|e| e.to_string())?;
 
     // Atualiza status e PID no banco
-    sqlx::query("UPDATE servers SET status = 'starting', pid = ?, last_started = NOW(), updated_at = NOW() WHERE id = ?")
+    sqlx::query("UPDATE am_servers SET status = 'starting', pid = ?, last_started = NOW(), updated_at = NOW() WHERE id = ?")
         .bind(pid)
         .bind(id)
         .execute(&state.db)
@@ -236,7 +236,7 @@ pub async fn stop_server(
         .await
         .map_err(|e| e.to_string())?;
 
-    sqlx::query("UPDATE servers SET status = 'stopped', pid = NULL, last_stopped = NOW(), updated_at = NOW() WHERE id = ?")
+    sqlx::query("UPDATE am_servers SET status = 'stopped', pid = NULL, last_stopped = NOW(), updated_at = NOW() WHERE id = ?")
         .bind(id)
         .execute(&state.db)
         .await
@@ -253,7 +253,7 @@ pub async fn restart_server(
     state: State<'_, AppState>,
 ) -> Result<u32, String> {
     let server = sqlx::query_as::<_, crate::models::server::Server>(
-        "SELECT * FROM servers WHERE id = ?",
+        "SELECT * FROM am_servers WHERE id = ?",
     )
     .bind(id)
     .fetch_one(&state.db)
@@ -268,7 +268,7 @@ pub async fn restart_server(
         .await
         .map_err(|e| e.to_string())?;
 
-    sqlx::query("UPDATE servers SET status = 'restarting', pid = ?, updated_at = NOW() WHERE id = ?")
+    sqlx::query("UPDATE am_servers SET status = 'restarting', pid = ?, updated_at = NOW() WHERE id = ?")
         .bind(pid)
         .bind(id)
         .execute(&state.db)
@@ -290,7 +290,7 @@ pub async fn server_status(
     if !running {
         // Garante que o banco reflita o estado real
         sqlx::query(
-            "UPDATE servers SET status = 'stopped', pid = NULL, updated_at = NOW() WHERE id = ? AND status NOT IN ('stopped')",
+            "UPDATE am_servers SET status = 'stopped', pid = NULL, updated_at = NOW() WHERE id = ? AND status NOT IN ('stopped')",
         )
         .bind(id)
         .execute(&state.db)
@@ -299,7 +299,7 @@ pub async fn server_status(
         Ok("stopped".to_string())
     } else {
         let row = sqlx::query_as::<_, crate::models::server::Server>(
-            "SELECT * FROM servers WHERE id = ?",
+            "SELECT * FROM am_servers WHERE id = ?",
         )
         .bind(id)
         .fetch_one(&state.db)
