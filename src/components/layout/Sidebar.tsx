@@ -13,7 +13,7 @@ import {
   FolderSync,
   CalendarDays,
 } from 'lucide-react'
-import logo from '../../assets/logo/logo-64.png'
+import logo from '../../assets/logo/logo-128.png'
 
 const navItems = [
   { to: '/dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
@@ -37,9 +37,9 @@ export default function Sidebar() {
   return (
     <aside className="flex flex-col w-56 min-w-56 h-full bg-surface-900 border-r border-surface-700">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-surface-700">
-        <img src={logo} alt="Ark Manager" className="w-8 h-8 object-contain" />
-        <span className="font-semibold text-slate-100 text-sm leading-tight">
+      <div className="flex flex-col items-center gap-2 px-4 py-5 border-b border-surface-700">
+        <img src={logo} alt="Ark Manager" className="w-16 h-16 object-contain" />
+        <span className="font-semibold text-slate-100 text-sm tracking-wide">
           Ark Manager
         </span>
       </div>

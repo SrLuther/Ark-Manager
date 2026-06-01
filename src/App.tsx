@@ -17,6 +17,7 @@ import Settings from './pages/Settings'
 import Monitoring from './pages/Monitoring'
 import SyncManager from './pages/SyncManager'
 import SeasonalEvents from './pages/SeasonalEvents'
+import UpdateNotifier from './components/updater/UpdateNotifier'
 
 // ─── Error Boundary ───────────────────────────────────────────────────────────
 class ErrorBoundary extends Component<
@@ -106,6 +107,7 @@ function App() {
   return (
     <BrowserRouter>
       <DbErrorBanner />
+      <UpdateNotifier />
       <Toaster
         position="top-right"
         toastOptions={{

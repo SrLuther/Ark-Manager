@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api/core'
+import { invoke as _invoke } from '@tauri-apps/api/core'
 import type {
   ServerResponse,
   CreateServerRequest,
@@ -22,6 +22,38 @@ import type {
   SeasonalEvent,
   CreateEventRequest,
 } from '../types'
+
+// ─────────────────────────────────────────────
+// Wrapper de invoke com erros em PT-BR
+// ─────────────────────────────────────────────
+
+function traduzirErro(msg: string): string {
+  if (msg.includes('state not managed') || msg.includes('You must call `.manage()`'))
+    return 'Banco de dados não configurado. Acesse Configurações → Banco de Dados e informe a URL de conexão MySQL.'
+  if (msg.includes('MissingConnectionString') || msg.includes('String de conexão não configurada'))
+    return 'URL de conexão MySQL não configurada. Acesse Configurações → Banco de Dados.'
+  if (msg.includes('Connection refused') || msg.includes('error connecting to server'))
+    return 'Não foi possível conectar ao MySQL. Verifique se o servidor de banco de dados está rodando.'
+  if (msg.includes('Access denied for user'))
+    return 'Acesso negado ao banco de dados. Verifique o usuário e a senha na URL de conexão.'
+  if (msg.includes('Unknown database'))
+    return 'Banco de dados não encontrado. Verifique o nome do banco na URL de conexão.'
+  if (msg.includes('Communications link failure') || msg.includes('timed out'))
+    return 'Tempo limite de conexão com o banco de dados esgotado.'
+  if (msg.includes('server not found') || msg.includes('Servidor não encontrado'))
+    return 'Servidor não encontrado.'
+  if (msg.includes('Not Found') || msg.includes('not found'))
+    return 'Recurso não encontrado.'
+  return msg
+}
+
+async function invoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
+  try {
+    return await _invoke<T>(cmd, args)
+  } catch (err) {
+    throw new Error(traduzirErro(String(err)))
+  }
+}
 
 // ─────────────────────────────────────────────
 // Servidor
@@ -326,3 +358,6 @@ export const saveDatabaseUrl = (url: string) =>
 
 export const testDatabaseConnection = (url: string) =>
   invoke<boolean>('test_database_connection', { url })
+
+export const setupDatabase = (url: string) =>
+  invoke<string>('setup_database', { url })

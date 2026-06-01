@@ -4,6 +4,7 @@ import {
   Plus, Trash2, Settings2,
   Server, FolderOpen, RefreshCw,
 } from 'lucide-react'
+import { open as openDialog } from '@tauri-apps/plugin-dialog'
 import { useServerStore } from '../stores/serverStore'
 import { createServer, updateServer, deleteServer, detectPortConflicts } from '../utils/tauri'
 import { statusLabel, mapLabel } from '../utils/helpers'
@@ -44,6 +45,11 @@ function ServerForm({ initial, onSave, onCancel, title, loading }: ServerFormPro
   const set = (k: keyof CreateServerRequest, v: unknown) =>
     setForm(f => ({ ...f, [k]: v }))
 
+  const pickDir = async (field: 'installDir' | 'steamcmdDir') => {
+    const selected = await openDialog({ directory: true, multiple: false })
+    if (typeof selected === 'string') set(field, selected)
+  }
+
   const checkPorts = async () => {
     try {
       const conflicts = await detectPortConflicts(form.gamePort, form.queryPort, form.rconPort)
@@ -65,8 +71,32 @@ function ServerForm({ initial, onSave, onCancel, title, loading }: ServerFormPro
           {ARK_MAPS.map(m => <option key={m} value={m}>{mapLabel(m)}</option>)}
         </select>
       </div>
-      <Input label="Diretório de instalação" value={form.installDir} onChange={e => set('installDir', e.target.value)} hint="Ex: C:\ARK\Server1" />
-      <Input label="Diretório SteamCMD" value={form.steamcmdDir} onChange={e => set('steamcmdDir', e.target.value)} hint="Ex: C:\SteamCMD" />
+      <div className="flex items-end gap-2">
+        <div className="flex-1">
+          <Input label="Diretório de instalação" value={form.installDir} onChange={e => set('installDir', e.target.value)} hint="Ex: C:\ARK\Server1" />
+        </div>
+        <button
+          type="button"
+          onClick={() => pickDir('installDir')}
+          className="mb-0.5 p-2 rounded-lg bg-surface-700 hover:bg-surface-600 border border-surface-600 text-slate-300 hover:text-white transition-colors"
+          title="Escolher pasta"
+        >
+          <FolderOpen size={15} />
+        </button>
+      </div>
+      <div className="flex items-end gap-2">
+        <div className="flex-1">
+          <Input label="Diretório SteamCMD" value={form.steamcmdDir} onChange={e => set('steamcmdDir', e.target.value)} hint="Ex: C:\SteamCMD" />
+        </div>
+        <button
+          type="button"
+          onClick={() => pickDir('steamcmdDir')}
+          className="mb-0.5 p-2 rounded-lg bg-surface-700 hover:bg-surface-600 border border-surface-600 text-slate-300 hover:text-white transition-colors"
+          title="Escolher pasta"
+        >
+          <FolderOpen size={15} />
+        </button>
+      </div>
       <div className="grid grid-cols-3 gap-2">
         <Input label="Porta do jogo" type="number" value={form.gamePort} onChange={e => set('gamePort', +e.target.value)} />
         <Input label="Porta Query" type="number" value={form.queryPort} onChange={e => set('queryPort', +e.target.value)} />

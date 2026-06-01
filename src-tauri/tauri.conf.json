@@ -43,5 +43,12 @@
       }
     }
   },
-  "plugins": {}
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/SrLuther/Ark-Manager/releases/latest/download/latest.json"
+      ],
+      "dialog": false
+    }
+  }
 }
