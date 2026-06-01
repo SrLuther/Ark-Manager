@@ -29,6 +29,7 @@
   },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "targets": "all",
     "icon": [
       "icons/32x32.png",
@@ -45,6 +46,7 @@
   },
   "plugins": {
     "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEMzNTMzOTNBMUFCMUVCMDYKUldRRzY3RWFPamxUdy9zTUtqVnRQRFBTQkxXYWtKZTRRMk9UdHpqbGI3Z2k5TWlBUHBoWU84MWQK",
       "endpoints": [
         "https://github.com/SrLuther/Ark-Manager/releases/latest/download/latest.json"
       ],
