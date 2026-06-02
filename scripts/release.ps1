@@ -14,7 +14,6 @@ param(
     [string]$Version
 )
 
-Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 
