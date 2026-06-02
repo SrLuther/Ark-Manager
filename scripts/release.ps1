@@ -76,18 +76,48 @@ if ($changelog -notmatch "##\s+\[$Version\]") {
     Fail "CHANGELOG.md nao tem entrada para [$Version].`nDocumente as mudancas antes de lancar."
 }
 
-# Garante que a secao nao lançado nao tem conteudo alem dos cabecalhos
+# Extrai o bloco da versao (entre o cabecalho dela e o proximo ## ou fim do arquivo)
+$versionBlock = [regex]::Match(
+    $changelog,
+    "##\s+\[$([regex]::Escape($Version))\][^\n]*\n(.*?)(?=\n##\s+\[|\z)",
+    [System.Text.RegularExpressions.RegexOptions]::Singleline
+).Groups[1].Value
+
+# Linhas de conteudo real: ignora linhas em branco, separadores e cabecalhos de subsecao (###)
+$contentLines = ($versionBlock -split "`n" | Where-Object {
+    $_.Trim() -ne '' -and
+    $_.Trim() -notmatch '^---+$' -and
+    $_.Trim() -notmatch '^###'
+})
+
+if ($contentLines.Count -eq 0) {
+    Write-Host ""
+    Write-Host "ERRO: A secao [$Version] no CHANGELOG.md existe mas esta vazia." -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Adicione pelo menos uma linha descrevendo o que mudou nesta versao." -ForegroundColor Yellow
+    Write-Host "Exemplo:" -ForegroundColor Yellow
+    Write-Host "  ### Adicionado" -ForegroundColor Yellow
+    Write-Host "  - Descricao da mudanca" -ForegroundColor Yellow
+    Write-Host ""
+    exit 1
+}
+
+Info "Descricao encontrada ($($contentLines.Count) itens):"
+$contentLines | Select-Object -First 5 | ForEach-Object { Info "  $_" }
+if ($contentLines.Count -gt 5) { Info "  ... e mais $($contentLines.Count - 5) itens." }
+
+# Garante que a secao [Nao lancado] nao tem conteudo alem dos cabecalhos
 $unreleasedBlock = [regex]::Match($changelog, '## \[Não lançado\](.*?)(?=## \[|\z)', [System.Text.RegularExpressions.RegexOptions]::Singleline).Groups[1].Value
 $unreleasedLines = ($unreleasedBlock -split "`n" | Where-Object { $_.Trim() -ne '' -and $_.Trim() -notmatch '^---$' })
 if ($unreleasedLines.Count -gt 0) {
     Write-Host ""
-    Write-Host "A secao [Nao lancado] ainda tem conteudo nao versionado:" -ForegroundColor Yellow
+    Write-Host "AVISO: A secao [Nao lancado] ainda tem conteudo nao versionado:" -ForegroundColor Yellow
     $unreleasedLines | Select-Object -First 5 | ForEach-Object { Write-Host "  $_" -ForegroundColor Yellow }
     Write-Host ""
     $resp = Read-Host "Continuar mesmo assim? (s/N)"
     if ($resp -notmatch '^[sS]$') { exit 1 }
 }
-Ok "CHANGELOG.md tem entrada para [$Version]."
+Ok "CHANGELOG.md validado para [$Version]."
 
 # ── 5. Tag nao existe ainda ────────────────────────────────────────────────────
 Info "Verificando se tag v$Version ja existe..."
