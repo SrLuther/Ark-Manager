@@ -57,7 +57,7 @@ if ($cargoVersion -ne $Version) { $mismatch += "Cargo.toml: $cargoVersion" }
 
 if ($mismatch.Count -gt 0) {
     Write-Host ""
-    Write-Host "Os seguintes arquivos precisam ter a versao $Version:" -ForegroundColor Red
+    Write-Host ("Os seguintes arquivos precisam ter a versao {0}:" -f $Version) -ForegroundColor Red
     $mismatch | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
     Write-Host ""
     Write-Host "Atualize manualmente ou execute:" -ForegroundColor Yellow
