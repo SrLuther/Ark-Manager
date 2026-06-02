@@ -1,11 +1,11 @@
-{
-  "version": "1.0.1",
-  "notes": "Correcoes: persistencia de configuracoes, create_server e verificar portas.",
-  "pub_date": "2026-06-01T12:00:00Z",
-  "platforms": {
-    "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRRzY3RWFPamxUdzcwRmxHa1NvTlEvdUEvMTY0TkhhZUxrTTc2L1lJQzZkOURuN3lSQnh6WFlwdTVwWFl5aE5OdE4xUXlDMndleFRWaWh2UmtnbGhjUHRualliMkh4bUFRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwMzMyNDM0CWZpbGU6QXJrIE1hbmFnZXJfMS4wLjBfeDY0LXNldHVwLmV4ZQo5TFV3RGdHcUJxK0paZHhYNDl1clJMSnA4VU80aG10RW1OcjgwSjU5aXRMc3YzS2FFbTVSOUFqalFsd0E2b2NlaVYvYnlWVWtuNGdHNjVWZ1lZRzZBQT09Cg==",
-      "url": "https://github.com/SrLuther/Ark-Manager/releases/download/v1.0.1/Ark.Manager_1.0.0_x64-setup.exe"
-    }
-  }
+﻿{
+    "platforms":  {
+                      "windows-x86_64":  {
+                                             "signature":  "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRRzY3RWFPamxUd3hEdGpzYS8xRDNKVi9Tb1dVUlI4dy9UU2R2NHFqanZjcXo0OE52VTB5bGRoVnNCdFc4QTNrZVprSysvTVh4WUJyMk1KNzdWRURsdzFEbUxYT1lpT0FrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwMzYwODE1CWZpbGU6QXJrIE1hbmFnZXJfMS4xLjBfeDY0LXNldHVwLmV4ZQpnV0d6bFV3czFQSm95eTFRUVpkOHQ3QXRrYjdJMWFyUjlzbVVubDIwMkpqcjR0MVVZMTJacWIrN3lTYnpjUmZFeVhOa3ltaWEyU0JoYjNzZUo1ZWNBQT09Cg==",
+                                             "url":  "https://github.com/SrLuther/Ark-Manager/releases/download/v1.1.0/Ark.Manager_1.1.0_x64-setup.exe"
+                                         }
+                  },
+    "pub_date":  "2026-06-02T00:53:33Z",
+    "version":  "1.1.0",
+    "notes":  "Ark Manager v1.1.0"
 }
