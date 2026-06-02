@@ -30,8 +30,8 @@ Write-Host ""
 
 # ── 1. Git working tree limpo ──────────────────────────────────────────────────
 Info "Verificando git working tree..."
-$dirty = git -C $root status --porcelain
-if ($dirty) { Fail "Existem arquivos não commitados. Faça commit antes de lançar.`n$dirty" }
+$dirtyLines = @(git -C $root status --porcelain)
+if ($dirtyLines.Count -gt 0) { Fail "Existem arquivos nao commitados. Faca commit antes de lancar.`n$($dirtyLines -join "`n")" }
 Ok "Working tree limpo."
 
 # ── 2. Branch correta ─────────────────────────────────────────────────────────
