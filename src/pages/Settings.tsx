@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   Settings as SettingsIcon, Save, RefreshCw, Send, CheckCircle, XCircle,
-  Loader2, Database, FlaskConical, FolderOpen, Download, Wrench, PackagePlus,
+  Loader2, FolderOpen, Download, Wrench,
 } from 'lucide-react'
 import { Button, Input, Card, CardHeader, CardTitle } from '../components/ui'
 import { open as openDialog } from '@tauri-apps/plugin-dialog'
 import { listen } from '@tauri-apps/api/event'
 import {
   getDiscordConfig, saveDiscordConfig, testDiscordWebhook,
-  getDatabaseUrl, saveDatabaseUrl, testDatabaseConnection, setupDatabase,
   isSteamcmdInstalled, installSteamcmd,
 } from '../utils/tauri'
 import toast from 'react-hot-toast'
@@ -45,33 +44,11 @@ function loadSettings(): AppSettings {
   }
 }
 
-function buildUrl(host: string, port: string, user: string, pass: string, db: string) {
-  return `mysql://${user}:${pass}@${host}:${port}/${db}`
-}
 
-function parseUrl(url: string) {
-  try {
-    const m = url.match(/^mysql:\/\/([^:]+):([^@]*)@([^:]+):(\d+)\/(.+)$/)
-    if (!m) return null
-    return { user: m[1], pass: m[2], host: m[3], port: m[4], db: m[5].split('?')[0] }
-  } catch {
-    return null
-  }
-}
 
 export default function Settings() {
   const [settings, setSettings] = useState<AppSettings>(DEFAULTS)
   const [saving, setSaving] = useState(false)
-
-  // Database
-  const [dbHost, setDbHost] = useState('localhost')
-  const [dbPort, setDbPort] = useState('3306')
-  const [dbUser, setDbUser] = useState('root')
-  const [dbPass, setDbPass] = useState('')
-  const [dbName, setDbName] = useState('ark_manager')
-  const [savingDb, setSavingDb]     = useState(false)
-  const [testingDb, setTestingDb]   = useState(false)
-  const [creatingDb, setCreatingDb] = useState(false)
 
   // SteamCMD
   const [steamStatus, setSteamStatus] = useState<'unknown' | 'installed' | 'missing'>('unknown')
@@ -87,11 +64,6 @@ export default function Settings() {
 
   useEffect(() => {
     setSettings(loadSettings())
-    getDatabaseUrl().then(url => {
-      if (!url) return
-      const p = parseUrl(url)
-      if (p) { setDbHost(p.host); setDbPort(p.port); setDbUser(p.user); setDbPass(p.pass); setDbName(p.db) }
-    }).catch(() => {})
     getDiscordConfig().then(cfg => {
       if (cfg) { setDiscordWebhook(cfg.webhookUrl); setDiscordEvents(cfg.enabledEvents) }
     }).catch(() => {})
@@ -112,46 +84,6 @@ export default function Settings() {
     }, 500)
     return () => clearTimeout(t)
   }, [settings.steamcmdDir])
-
-  const currentUrl = () => buildUrl(dbHost, dbPort, dbUser, dbPass, dbName)
-
-  const handleSaveDb = async () => {
-    setSavingDb(true)
-    try {
-      await saveDatabaseUrl(currentUrl())
-      toast.success('Configuração salva! Reinicie o aplicativo para conectar.')
-    } catch (e) { toast.error(String(e)) }
-    finally { setSavingDb(false) }
-  }
-
-  const handleTestDb = async () => {
-    setTestingDb(true)
-    try {
-      await testDatabaseConnection(currentUrl())
-      toast.success('Conexão com MySQL bem-sucedida!')
-    } catch (e) { toast.error(String(e)) }
-    finally { setTestingDb(false) }
-  }
-
-  const handleCreateDb = async () => {
-    setCreatingDb(true)
-    try {
-      const msg = await setupDatabase(currentUrl())
-      await saveDatabaseUrl(currentUrl())
-      toast.success(msg)
-    } catch (e) { toast.error(String(e)) }
-    finally { setCreatingDb(false) }
-  }
-
-  const handleImportDb = async () => {
-    setTestingDb(true)
-    try {
-      await testDatabaseConnection(currentUrl())
-      await saveDatabaseUrl(currentUrl())
-      toast.success('Banco importado! As tabelas necessárias serão criadas automaticamente ao reiniciar.')
-    } catch (e) { toast.error(`Banco não acessível: ${String(e)}`) }
-    finally { setTestingDb(false) }
-  }
 
   const handleInstallSteamCMD = async (force = false) => {
     if (!force && steamStatus === 'installed') {
@@ -200,8 +132,10 @@ export default function Settings() {
     setSettings(prev => ({ ...prev, [k]: v }))
 
   const pickDir = async (field: keyof AppSettings) => {
-    const selected = await openDialog({ directory: true, multiple: false })
-    if (typeof selected === 'string') set(field, selected)
+    try {
+      const selected = await openDialog({ directory: true, multiple: false })
+      if (typeof selected === 'string') set(field, selected)
+    } catch { toast.error('Não foi possível abrir o seletor de pasta') }
   }
 
   const handleSave = async () => {
@@ -209,7 +143,6 @@ export default function Settings() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
       await Promise.allSettled([
-        saveDatabaseUrl(currentUrl()),
         saveDiscordConfig(discordWebhook, discordEvents),
       ])
       toast.success('Configurações salvas')
@@ -238,55 +171,6 @@ export default function Settings() {
           </Button>
         </div>
       </div>
-
-      {/* ── Banco de Dados ─────────────────────────────── */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Database size={14} className="text-ark-400" /> Banco de Dados (MySQL / MariaDB)
-          </CardTitle>
-        </CardHeader>
-        <div className="space-y-3">
-          <div className="grid grid-cols-3 gap-2">
-            <div className="col-span-2">
-              <Input label="Host" value={dbHost} onChange={e => setDbHost(e.target.value)} placeholder="localhost" />
-            </div>
-            <Input label="Porta" value={dbPort} onChange={e => setDbPort(e.target.value)} placeholder="3306" />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Input label="Usuário" value={dbUser} onChange={e => setDbUser(e.target.value)} placeholder="root" />
-            <Input label="Senha" type="password" value={dbPass} onChange={e => setDbPass(e.target.value)} placeholder="••••••••" />
-          </div>
-          <Input label="Nome do banco" value={dbName} onChange={e => setDbName(e.target.value)} placeholder="ark_manager" />
-
-          <p className="text-xs text-slate-500 font-mono break-all bg-surface-800 rounded px-2 py-1.5">
-            {currentUrl()}
-          </p>
-
-          <div className="flex flex-wrap gap-2 pt-1">
-            <Button size="sm" loading={creatingDb} onClick={handleCreateDb}
-              title="Cria o banco se não existir e configura todas as tabelas">
-              <PackagePlus size={13} /> Criar banco
-            </Button>
-            <Button size="sm" variant="secondary" loading={testingDb && !creatingDb} onClick={handleImportDb}
-              title="Conecta a um banco existente e salva a configuração">
-              <Database size={13} /> Importar existente
-            </Button>
-            <Button size="sm" variant="ghost" loading={testingDb} onClick={handleTestDb}>
-              <FlaskConical size={12} /> Testar conexão
-            </Button>
-            <Button size="sm" variant="ghost" loading={savingDb} onClick={handleSaveDb}>
-              <Save size={12} /> Salvar URL
-            </Button>
-          </div>
-
-          <p className="text-xs text-slate-500">
-            <strong className="text-slate-400">Criar banco</strong> — cria o schema e todas as tabelas do zero.<br />
-            <strong className="text-slate-400">Importar existente</strong> — usa um banco já existente (tabelas faltantes criadas automaticamente).<br />
-            Reinicie o app após salvar.
-          </p>
-        </div>
-      </Card>
 
       {/* ── SteamCMD ──────────────────────────────────── */}
       <Card>

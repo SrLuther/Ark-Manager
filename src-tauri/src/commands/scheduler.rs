@@ -33,7 +33,7 @@ pub async fn create_task(
         r#"INSERT INTO am_scheduled_tasks
         (server_id, task_name, task_type, cron_expression, command, message,
          pre_warning_minutes, enabled, run_count, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, NOW(), NOW())"#,
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"#,
     )
     .bind(req.server_id)
     .bind(&req.task_name)
@@ -77,7 +77,7 @@ pub async fn update_task(
         message = COALESCE(?, message),
         pre_warning_minutes = COALESCE(?, pre_warning_minutes),
         enabled = COALESCE(?, enabled),
-        updated_at = NOW()
+        updated_at = CURRENT_TIMESTAMP
         WHERE id = ?"#,
     )
     .bind(&req.task_name)

@@ -26,8 +26,8 @@ simplelog = "0.12"
 
 tokio = { version = "1", features = ["full"] }
 
-# MySQL
-sqlx = { version = "0.8", features = ["runtime-tokio", "mysql", "chrono", "uuid"] }
+# SQLite (banco local, sem dependência externa)
+sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "chrono"] }
 uuid = { version = "1", features = ["v4", "serde"] }
 
 sysinfo = "0.32"

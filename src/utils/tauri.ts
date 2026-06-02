@@ -29,15 +29,7 @@ import type {
 
 function traduzirErro(msg: string): string {
   if (msg.includes('state not managed') || msg.includes('You must call `.manage()`'))
-    return 'Banco de dados não configurado. Acesse Configurações → Banco de Dados e informe a URL de conexão MySQL.'
-  if (msg.includes('MissingConnectionString') || msg.includes('String de conexão não configurada'))
-    return 'URL de conexão MySQL não configurada. Acesse Configurações → Banco de Dados.'
-  if (msg.includes('Connection refused') || msg.includes('error connecting to server'))
-    return 'Não foi possível conectar ao MySQL. Verifique se o servidor de banco de dados está rodando.'
-  if (msg.includes('Access denied for user'))
-    return 'Acesso negado ao banco de dados. Verifique o usuário e a senha na URL de conexão.'
-  if (msg.includes('Unknown database'))
-    return 'Banco de dados não encontrado. Verifique o nome do banco na URL de conexão.'
+    return 'Banco de dados não pronto. Aguarde a inicialização do aplicativo.'
   if (msg.includes('Communications link failure') || msg.includes('timed out'))
     return 'Tempo limite de conexão com o banco de dados esgotado.'
   if (msg.includes('server not found') || msg.includes('Servidor não encontrado'))
@@ -346,18 +338,4 @@ export const forceEndEvent = (id: number) =>
 export const getEventStatus = (id: number) =>
   invoke<string>('get_event_status', { id })
 
-// ─────────────────────────────────────────────
-// Configuração de Banco de Dados
-// ─────────────────────────────────────────────
 
-export const getDatabaseUrl = () =>
-  invoke<string | null>('get_database_url')
-
-export const saveDatabaseUrl = (url: string) =>
-  invoke<void>('save_database_url', { url })
-
-export const testDatabaseConnection = (url: string) =>
-  invoke<boolean>('test_database_connection', { url })
-
-export const setupDatabase = (url: string) =>
-  invoke<string>('setup_database', { url })

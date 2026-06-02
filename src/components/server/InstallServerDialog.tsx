@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Download, FolderOpen, CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import { open as openDialog } from '@tauri-apps/plugin-dialog'
+import toast from 'react-hot-toast'
 import { useInstallStore } from '../../stores/installStore'
 import { isSteamcmdInstalled } from '../../utils/tauri'
 import { Button, Input, Modal } from '../ui'
@@ -54,8 +55,10 @@ export function InstallServerDialog({ open, onClose, onComplete }: InstallServer
   }, [steamcmdDir])
 
   const pickDir = async (setter: (v: string) => void) => {
-    const selected = await openDialog({ directory: true, multiple: false })
-    if (typeof selected === 'string') setter(selected)
+    try {
+      const selected = await openDialog({ directory: true, multiple: false })
+      if (typeof selected === 'string') setter(selected)
+    } catch { toast.error('Não foi possível abrir o seletor de pasta') }
   }
 
   const handleInstall = async () => {

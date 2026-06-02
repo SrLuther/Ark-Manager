@@ -1,4 +1,4 @@
-//! Geração e validação de código de pareamento de 6 dígitos.
+﻿//! Geração e validação de código de pareamento de 6 dígitos.
 //!
 //! O código é válido por 2 minutos após a geração.
 //! Usado quando outro ARK Manager quer se parear com este agente.

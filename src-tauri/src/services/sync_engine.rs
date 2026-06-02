@@ -1,4 +1,4 @@
-//! Motor de sincronização — orquestra reconciliação e watch de pastas.
+﻿//! Motor de sincronização — orquestra reconciliação e watch de pastas.
 //!
 //! Responsabilidades:
 //! - Manter watchers ativos por folder_id.
@@ -259,9 +259,9 @@ pub async fn sync_folder_with_peer(
     // 7. Atualizar pasta no banco
     sqlx::query(
         "UPDATE sync_folders
-         SET status = 'synced', last_sync_at = NOW(),
+         SET status = 'synced', last_sync_at = CURRENT_TIMESTAMP,
              bytes_transferred = bytes_transferred + ?,
-             updated_at = NOW()
+             updated_at = CURRENT_TIMESTAMP
          WHERE id = ?",
     )
     .bind(total_bytes_sent)
@@ -313,7 +313,7 @@ pub fn start_periodic_sync(
                 if !was_offline {
                     log::info!("Peer {}:{} offline — pasta {} em modo offline", agent_address, agent_port, folder_id);
                     let _ = sqlx::query(
-                        "UPDATE sync_folders SET status = 'offline', updated_at = NOW() WHERE id = ?",
+                        "UPDATE sync_folders SET status = 'offline', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
                     )
                     .bind(folder_id)
                     .execute(&pool)
@@ -326,7 +326,7 @@ pub fn start_periodic_sync(
             if should_sync {
                 log::info!("Sincronizando pasta {} com {}:{}...", folder_id, agent_address, agent_port);
                 let _ = sqlx::query(
-                    "UPDATE sync_folders SET status = 'syncing', updated_at = NOW() WHERE id = ?",
+                    "UPDATE sync_folders SET status = 'syncing', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
                 )
                 .bind(folder_id)
                 .execute(&pool)
@@ -342,7 +342,7 @@ pub fn start_periodic_sync(
                     Err(e) => {
                         log::warn!("Sync falhou para pasta {}: {}", folder_id, e);
                         let _ = sqlx::query(
-                            "UPDATE sync_folders SET status = 'error', updated_at = NOW() WHERE id = ?",
+                            "UPDATE sync_folders SET status = 'error', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
                         )
                         .bind(folder_id)
                         .execute(&pool)

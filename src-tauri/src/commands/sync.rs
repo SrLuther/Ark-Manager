@@ -1,4 +1,4 @@
-//! Comandos Tauri para gerenciamento de sincronização de pastas.
+﻿//! Comandos Tauri para gerenciamento de sincronização de pastas.
 
 use std::path::Path;
 use std::sync::Arc;
@@ -55,7 +55,7 @@ pub async fn add_sync_folder(
     // Inserir no banco
     let id = sqlx::query_scalar::<_, u64>(
         "INSERT INTO am_sync_folders (name, local_path, agent_id, status, bytes_transferred, conflict_count, created_at, updated_at)
-         VALUES (?, ?, ?, 'idle', 0, 0, NOW(), NOW())",
+         VALUES (?, ?, ?, 'idle', 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
     )
     .bind(&name)
     .bind(&local_path)

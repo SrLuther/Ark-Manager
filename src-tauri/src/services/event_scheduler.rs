@@ -1,4 +1,4 @@
-/// Motor de eventos sazonais: monitora start_at/end_at, executa broadcasts RCON,
+﻿/// Motor de eventos sazonais: monitora start_at/end_at, executa broadcasts RCON,
 /// para/inicia servidores e aplica/restaura taxas de INI.
 ///
 /// Itens implementados:
@@ -493,10 +493,10 @@ fn chrono_now_str() -> String {
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_secs())
         .unwrap_or(0);
-    unix_to_mysql_datetime(secs as i64)
+    unix_to_datetime_str(secs as i64)
 }
 
-/// Retorna "agora + offset_secs" como string MySQL DATETIME.
+/// Retorna "agora + offset_secs" como string DATETIME (SQLite: YYYY-MM-DD HH:MM:SS).
 fn chrono_offset_str(offset_secs: i64) -> String {
     use std::time::{SystemTime, UNIX_EPOCH};
     let secs = SystemTime::now()
@@ -504,10 +504,10 @@ fn chrono_offset_str(offset_secs: i64) -> String {
         .map(|d| d.as_secs() as i64)
         .unwrap_or(0)
         + offset_secs;
-    unix_to_mysql_datetime(secs)
+    unix_to_datetime_str(secs)
 }
 
-fn unix_to_mysql_datetime(unix: i64) -> String {
+fn unix_to_datetime_str(unix: i64) -> String {
     // Conversão manual UTC: YYYY-MM-DD HH:MM:SS
     let secs = unix.max(0) as u64;
     let s = secs % 60;

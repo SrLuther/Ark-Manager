@@ -46,8 +46,10 @@ function ServerForm({ initial, onSave, onCancel, title, loading }: ServerFormPro
     setForm(f => ({ ...f, [k]: v }))
 
   const pickDir = async (field: 'installDir' | 'steamcmdDir') => {
-    const selected = await openDialog({ directory: true, multiple: false })
-    if (typeof selected === 'string') set(field, selected)
+    try {
+      const selected = await openDialog({ directory: true, multiple: false })
+      if (typeof selected === 'string') set(field, selected)
+    } catch { toast.error('Não foi possível abrir o seletor de pasta') }
   }
 
   const checkPorts = async () => {

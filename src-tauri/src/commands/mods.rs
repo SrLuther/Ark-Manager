@@ -50,7 +50,7 @@ pub async fn add_mod(
     }
 
     let mods_str = ids.join(",");
-    sqlx::query("UPDATE am_servers SET mods = ?, updated_at = NOW() WHERE id = ?")
+    sqlx::query("UPDATE am_servers SET mods = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
         .bind(&mods_str)
         .bind(server_id)
         .execute(&state.db)
@@ -72,7 +72,7 @@ pub async fn remove_mod(
     ids.retain(|id| id != mod_id.trim());
 
     let mods_str = ids.join(",");
-    sqlx::query("UPDATE am_servers SET mods = ?, updated_at = NOW() WHERE id = ?")
+    sqlx::query("UPDATE am_servers SET mods = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
         .bind(&mods_str)
         .bind(server_id)
         .execute(&state.db)
@@ -96,7 +96,7 @@ pub async fn reorder_mods(
         .collect::<Vec<_>>()
         .join(",");
 
-    sqlx::query("UPDATE am_servers SET mods = ?, updated_at = NOW() WHERE id = ?")
+    sqlx::query("UPDATE am_servers SET mods = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
         .bind(&mods_str)
         .bind(server_id)
         .execute(&state.db)

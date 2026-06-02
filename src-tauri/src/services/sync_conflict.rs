@@ -1,4 +1,4 @@
-//! Resolução de conflitos por last-write-wins e registro no banco.
+﻿//! Resolução de conflitos por last-write-wins e registro no banco.
 
 use crate::db::DbPool;
 
@@ -37,7 +37,7 @@ pub async fn record_conflict(
 ) -> Result<(), String> {
     sqlx::query(
         "INSERT INTO sync_conflicts (folder_id, path, local_mtime, remote_mtime, resolution, created_at)
-         VALUES (?, ?, ?, ?, ?, NOW())",
+         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
     )
     .bind(folder_id)
     .bind(path)
@@ -69,7 +69,7 @@ pub async fn log_sync_event(
 ) -> Result<(), String> {
     sqlx::query(
         "INSERT INTO sync_events (folder_id, event_type, path, bytes, direction, message, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, NOW())",
+         VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
     )
     .bind(folder_id)
     .bind(event_type)

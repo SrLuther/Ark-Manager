@@ -47,7 +47,7 @@ pub async fn create_server(
          ip_address, mods, cluster_id, enable_pvp, enable_battleye, enable_crosshair,
          allow_third_person, allow_tribe_alliances, custom_args, auto_start, auto_restart,
          startup_delay, status, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'stopped', NOW(), NOW())"#,
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'stopped', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"#,
     )
     .bind(&req.name)
     .bind(&req.install_path)
@@ -122,7 +122,7 @@ pub async fn update_server(
         startup_delay = COALESCE(?, startup_delay),
         startup_priority = COALESCE(?, startup_priority),
         intelligent_mode = COALESCE(?, intelligent_mode),
-        updated_at = NOW()
+        updated_at = CURRENT_TIMESTAMP
         WHERE id = ?"#,
     )
     .bind(&req.name)
@@ -215,7 +215,7 @@ pub async fn start_server(
         .map_err(|e| e.to_string())?;
 
     // Atualiza status e PID no banco
-    sqlx::query("UPDATE am_servers SET status = 'starting', pid = ?, last_started = NOW(), updated_at = NOW() WHERE id = ?")
+    sqlx::query("UPDATE am_servers SET status = 'starting', pid = ?, last_started = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
         .bind(pid)
         .bind(id)
         .execute(&state.db)
@@ -236,7 +236,7 @@ pub async fn stop_server(
         .await
         .map_err(|e| e.to_string())?;
 
-    sqlx::query("UPDATE am_servers SET status = 'stopped', pid = NULL, last_stopped = NOW(), updated_at = NOW() WHERE id = ?")
+    sqlx::query("UPDATE am_servers SET status = 'stopped', pid = NULL, last_stopped = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
         .bind(id)
         .execute(&state.db)
         .await
@@ -268,7 +268,7 @@ pub async fn restart_server(
         .await
         .map_err(|e| e.to_string())?;
 
-    sqlx::query("UPDATE am_servers SET status = 'restarting', pid = ?, updated_at = NOW() WHERE id = ?")
+    sqlx::query("UPDATE am_servers SET status = 'restarting', pid = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
         .bind(pid)
         .bind(id)
         .execute(&state.db)
@@ -290,7 +290,7 @@ pub async fn server_status(
     if !running {
         // Garante que o banco reflita o estado real
         sqlx::query(
-            "UPDATE am_servers SET status = 'stopped', pid = NULL, updated_at = NOW() WHERE id = ? AND status NOT IN ('stopped')",
+            "UPDATE am_servers SET status = 'stopped', pid = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status NOT IN ('stopped')",
         )
         .bind(id)
         .execute(&state.db)

@@ -1,4 +1,4 @@
-//! Comandos Tauri para gerenciamento de agentes remotos ARK Manager.
+﻿//! Comandos Tauri para gerenciamento de agentes remotos ARK Manager.
 //!
 //! Fluxo de pareamento:
 //!   - Modo cliente: `discover_agents` → `pair_agent(address, port, code)` → agente salvo no banco
@@ -101,7 +101,7 @@ pub async fn pair_agent(
         // Atualiza agente existente (salva token original para conexões WS)
         sqlx::query(
             "UPDATE am_sync_agents
-             SET name = ?, token_hash = ?, session_token = ?, paired = 1, last_seen_at = NOW()
+             SET name = ?, token_hash = ?, session_token = ?, paired = 1, last_seen_at = CURRENT_TIMESTAMP
              WHERE id = ?",
         )
         .bind(&resp.agent_name)
@@ -125,7 +125,7 @@ pub async fn pair_agent(
     // Insere novo agente
     let insert_result = sqlx::query(
         "INSERT INTO am_sync_agents (name, address, port, paired, token_hash, session_token, last_seen_at, created_at)
-         VALUES (?, ?, ?, 1, ?, ?, NOW(), NOW())",
+         VALUES (?, ?, ?, 1, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
     )
     .bind(&resp.agent_name)
     .bind(&address)
@@ -136,7 +136,7 @@ pub async fn pair_agent(
     .await
     .map_err(|e| e.to_string())?;
 
-    let new_id = insert_result.last_insert_id() as u32;
+    let new_id = insert_result.last_insert_rowid() as u32;
 
     sqlx::query_as::<_, Agent>(
         "SELECT id, name, address, port, paired, token_hash, session_token, last_seen_at, created_at

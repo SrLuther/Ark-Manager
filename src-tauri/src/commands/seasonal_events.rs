@@ -1,4 +1,4 @@
-use tauri::State;
+﻿use tauri::State;
 
 use crate::AppState;
 use crate::db::DbPool;
@@ -8,9 +8,9 @@ use crate::models::seasonal_event::{
 };
 use crate::services::event_scheduler::{SchedulerStateArc, activate_event_manual, deactivate_event_manual};
 
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // list_seasonal_events
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 #[tauri::command]
 pub async fn list_seasonal_events(
@@ -36,9 +36,9 @@ pub async fn list_seasonal_events(
     Ok(result)
 }
 
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // get_seasonal_event
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 #[tauri::command]
 pub async fn get_seasonal_event(
@@ -61,9 +61,9 @@ pub async fn get_seasonal_event(
     Ok(SeasonalEventFull { event: ev, rates, server_ids })
 }
 
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // create_seasonal_event
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 #[tauri::command]
 pub async fn create_seasonal_event(
@@ -88,7 +88,7 @@ pub async fn create_seasonal_event(
     .await
     .map_err(|e| e.to_string())?;
 
-    let event_id = res.last_insert_id() as u32;
+    let event_id = res.last_insert_rowid() as u32;
 
     // Insere rates
     sqlx::query(
@@ -109,7 +109,7 @@ pub async fn create_seasonal_event(
     // Insere servidores
     for sid in &req.server_ids {
         sqlx::query(
-            "INSERT IGNORE INTO am_seasonal_event_servers (event_id, server_id) VALUES (?, ?)",
+            "INSERT OR IGNORE INTO am_seasonal_event_servers (event_id, server_id) VALUES (?, ?)",
         )
         .bind(event_id)
         .bind(sid)
@@ -121,9 +121,9 @@ pub async fn create_seasonal_event(
     get_seasonal_event(event_id, state).await
 }
 
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // update_seasonal_event
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 #[tauri::command]
 pub async fn update_seasonal_event(
@@ -185,7 +185,7 @@ pub async fn update_seasonal_event(
             .bind(id).execute(pool).await.map_err(|e| e.to_string())?;
         for sid in server_ids {
             sqlx::query(
-"INSERT IGNORE INTO am_seasonal_event_servers (event_id, server_id) VALUES (?, ?)",
+"INSERT OR IGNORE INTO am_seasonal_event_servers (event_id, server_id) VALUES (?, ?)",
             )
             .bind(id).bind(sid).execute(pool).await.map_err(|e| e.to_string())?;
         }
@@ -194,9 +194,9 @@ pub async fn update_seasonal_event(
     get_seasonal_event(id, state).await
 }
 
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // cancel_seasonal_event
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 #[tauri::command]
 pub async fn cancel_seasonal_event(
@@ -227,9 +227,9 @@ pub async fn cancel_seasonal_event(
     Ok(())
 }
 
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // force_start_event / force_end_event
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 #[tauri::command]
 pub async fn force_start_event(
@@ -261,9 +261,9 @@ pub async fn force_end_event(
     deactivate_event_manual(pool, &scheduler, id).await
 }
 
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // get_event_status
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 #[tauri::command]
 pub async fn get_event_status(
@@ -278,9 +278,9 @@ pub async fn get_event_status(
     Ok(row.0)
 }
 
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Helpers
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async fn get_rates(pool: &DbPool, event_id: u32) -> Result<Option<EventRate>, String> {
     sqlx::query_as(
@@ -306,7 +306,7 @@ async fn get_server_ids(pool: &DbPool, event_id: u32) -> Result<Vec<u32>, String
 
 fn validate_event_dates(start: &str, end: &str) -> Result<(), String> {
     if end <= start {
-        return Err("A data de fim deve ser posterior à data de início".to_string());
+        return Err("A data de fim deve ser posterior Ã  data de inÃ­cio".to_string());
     }
     Ok(())
 }

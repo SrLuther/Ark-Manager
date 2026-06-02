@@ -29,8 +29,7 @@ pub async fn save_discord_config(
 
     // Upsert na tabela settings (criada na migration v3 ou similar)
     sqlx::query(
-        "INSERT INTO am_settings (`key`, `value`) VALUES ('discord_webhook', ?)
-         ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)",
+        "INSERT OR REPLACE INTO am_settings (key, value) VALUES ('discord_webhook', ?)",
     )
     .bind(&webhook_url)
     .execute(&state.db)
@@ -38,8 +37,7 @@ pub async fn save_discord_config(
     .map_err(|e| e.to_string())?;
 
     sqlx::query(
-        "INSERT INTO am_settings (`key`, `value`) VALUES ('discord_events', ?)
-         ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)",
+        "INSERT OR REPLACE INTO am_settings (key, value) VALUES ('discord_events', ?)",
     )
     .bind(&events_json)
     .execute(&state.db)
@@ -55,7 +53,7 @@ pub async fn get_discord_config(
     state: State<'_, AppState>,
 ) -> Result<Option<DiscordSettings>, String> {
     let webhook: Option<String> = sqlx::query_scalar(
-        "SELECT `value` FROM am_settings WHERE `key` = 'discord_webhook' LIMIT 1",
+        "SELECT value FROM am_settings WHERE key = 'discord_webhook' LIMIT 1",
     )
     .fetch_optional(&state.db)
     .await
@@ -63,7 +61,7 @@ pub async fn get_discord_config(
     .flatten();
 
     let events_raw: Option<String> = sqlx::query_scalar(
-        "SELECT `value` FROM am_settings WHERE `key` = 'discord_events' LIMIT 1",
+        "SELECT value FROM am_settings WHERE key = 'discord_events' LIMIT 1",
     )
     .fetch_optional(&state.db)
     .await

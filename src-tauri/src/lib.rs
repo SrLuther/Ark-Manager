@@ -10,7 +10,6 @@ use commands::{
     rcon::new_rcon_map,
 };
 use db::DbPool;
-use db::connection::load_db_config;
 use services::{
     agent_auth::PairingState,
     event_scheduler::{SchedulerState, SchedulerStateArc},
@@ -148,9 +147,6 @@ pub fn run() {
             commands::discord::get_discord_config,
             commands::discord::test_discord_webhook,
             // Banco de dados
-            commands::database::get_database_url,
-            commands::database::save_database_url,
-            commands::database::test_database_connection,
             commands::database::setup_database,
             // Eventos sazonais
             commands::seasonal_events::list_seasonal_events,
@@ -193,23 +189,12 @@ pub fn run() {
                 .await;
             });
 
-            // Inicializa o banco de dados de forma assíncrona
+            // Inicializa o banco de dados SQLite de forma assíncrona
             tauri::async_runtime::spawn(async move {
-                let config = match load_db_config() {
-                    Ok(c) => c,
-                    Err(e) => {
-                        log::warn!("Banco de dados não configurado: {}", e);
-                        let _ = handle.emit("db:error", format!("{}", e));
-                        return;
-                    }
-                };
-
-                match db::initialize(&config).await {
+                match db::initialize().await {
                     Ok(pool) => {
-                        log::info!("Banco de dados inicializado com sucesso.");
-                        // Preenche shared_db para o servidor WS poder usar o banco
+                        log::info!("Banco de dados SQLite inicializado com sucesso.");
                         *shared_db_setup.write().await = Some(pool.clone());
-                        // Inicia o scheduler de eventos sazonais
                         services::event_scheduler::start_event_scheduler(
                             pool.clone(),
                             event_scheduler_for_spawn,

@@ -52,7 +52,7 @@ pub async fn create_cluster(
     state: State<'_, AppState>,
 ) -> Result<Cluster, String> {
     sqlx::query(
-        "INSERT INTO am_clusters (name, cluster_id, cluster_dir, description, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())",
+        "INSERT INTO am_clusters (name, cluster_id, cluster_dir, description, created_at, updated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
     )
     .bind(&req.name)
     .bind(&req.cluster_id)
@@ -73,7 +73,7 @@ pub async fn create_cluster(
 /// Remove um cluster. Os servidores vinculados têm cluster_id zerado.
 #[tauri::command]
 pub async fn delete_cluster(id: u32, state: State<'_, AppState>) -> Result<(), String> {
-    sqlx::query("UPDATE am_servers SET cluster_id = NULL, updated_at = NOW() WHERE cluster_id = ?")
+    sqlx::query("UPDATE am_servers SET cluster_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE cluster_id = ?")
         .bind(id)
         .execute(&state.db)
         .await
@@ -95,7 +95,7 @@ pub async fn assign_server_to_cluster(
     cluster_id: u32,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    sqlx::query("UPDATE am_servers SET cluster_id = ?, updated_at = NOW() WHERE id = ?")
+    sqlx::query("UPDATE am_servers SET cluster_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
         .bind(cluster_id)
         .bind(server_id)
         .execute(&state.db)
@@ -110,7 +110,7 @@ pub async fn unassign_server_from_cluster(
     server_id: u32,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    sqlx::query("UPDATE am_servers SET cluster_id = NULL, updated_at = NOW() WHERE id = ?")
+    sqlx::query("UPDATE am_servers SET cluster_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
         .bind(server_id)
         .execute(&state.db)
         .await

@@ -49,11 +49,11 @@ pub async fn create_backup(
     sqlx::query(
         r#"INSERT INTO am_backups
         (server_id, backup_type, file_path, size_bytes, includes_saves, status, created_at)
-        VALUES (?, 'manual', ?, ?, 1, 'completed', NOW())"#,
+        VALUES (?, 'manual', ?, ?, 1, 'completed', CURRENT_TIMESTAMP)"#,
     )
     .bind(server_id)
     .bind(&backup_path_str)
-    .bind(result.size_bytes)
+    .bind(result.size_bytes as i64)
     .execute(&state.db)
     .await
     .map_err(|e| e.to_string())?;
