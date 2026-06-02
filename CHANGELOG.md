@@ -7,13 +7,29 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ## [Não lançado]
 
+---
+
+## [1.1.0] — 01/06/2026
+
 ### Adicionado
 - Sistema de autoupdate via `tauri-plugin-updater` — verifica novas versões no GitHub Releases ao iniciar e a cada 4 horas; exibe banner flutuante com progresso de download e botão de reinicialização (`src/components/updater/UpdateNotifier.tsx`)
 - Endpoint de update configurado em `tauri.conf.json` apontando para `latest.json` do GitHub Releases
 
+### Alterado
+- **Banco de dados migrado de MySQL/MariaDB para SQLite local** — zero configuração necessária; arquivo criado automaticamente em `%APPDATA%\com.arkmanager.app\ark-manager.db` na primeira execução
+- `db/connection.rs` reescrito: pool SQLite via `sqlx` com `SqlitePoolOptions`, opção `create_if_missing`, `foreign_keys` habilitado
+- `db/migrations.rs` reescrito: sintaxe SQLite (`INTEGER PRIMARY KEY AUTOINCREMENT`, `TEXT`, `REAL`, índices em instruções `CREATE INDEX` separadas, sem `ENGINE=InnoDB`, `ENUM`, `ON UPDATE`)
+- `db/mod.rs`: `initialize()` sem parâmetros — não depende mais de configuração prévia do usuário
+- `lib.rs`: removido `load_db_config`; inicialização do banco direto no startup sem retry externo
+- `commands/database.rs`: substituído por stub simples — retorna o caminho do banco em uso
+- Todas as queries SQL: `NOW()` → `CURRENT_TIMESTAMP`, `INSERT IGNORE` → `INSERT OR IGNORE`, `ON DUPLICATE KEY UPDATE` → `INSERT OR REPLACE`, `last_insert_id()` → `last_insert_rowid()`
+- `Settings.tsx`: seção "Banco de Dados (MySQL / MariaDB)" removida — não há mais configuração de banco para o usuário
+- `utils/tauri.ts`: exports `getDatabaseUrl`, `saveDatabaseUrl`, `testDatabaseConnection` removidos; mensagens de erro MySQL-específicas removidas de `traduzirErro()`
+
 ### Corrigido
 - Console do Windows suprimido em release via `#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]`
 - Erros internos do Tauri/Rust traduzidos para PT-BR via wrapper `invoke()` em `utils/tauri.ts`
+- Botões de seleção de pasta (`pickDir`) em Settings, ServerManager e InstallServerDialog agora exibem toast de erro em vez de falhar silenciosamente
 
 ---
 
